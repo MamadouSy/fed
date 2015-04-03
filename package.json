@@ -1,0 +1,23 @@
+{
+  "name": "fed",
+  "version": "1.0.0",
+  "description": "Execute an arbitrary shell command for each directories in the configuration file",
+  "author": "Mamadou Sy",
+  "keywords" : ["fed", "for each directories","directories", "shell"],
+  "homepage" : "https://github.com/MamadouSy/fed",
+  "license" : "MIT",
+  "main": "fed.js",
+  "bin" : {
+     "fed" : "./fed.js"
+  },
+  "repository" : {
+     "type" : "git",
+     "url"  : "https://github.com/MamadouSy/fed.git"
+  },
+  "dependencies" : {
+      "fed-git" : "1.0.x"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
