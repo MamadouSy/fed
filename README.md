@@ -5,7 +5,7 @@ listed in the `fed.json` configuration file.
 
 ## Installation
 
-    $ npm install --global node-fed
+    $ sudo npm install --global node-fed
 
 ## Usage
 
