@@ -3,6 +3,10 @@
 This developers tools allows to execute an arbitrary shell command for each directories
 listed in the `fed.json` configuration file.
 
+## Installation
+
+    $ npm install --global node-fed
+
 ## Usage
 
     $ fed [directories...] <command>
@@ -131,6 +135,30 @@ List all fed modules currently loaded
     $ fed fed-modules
     fed-git
 
+### fed-add-modules
+
+Add fed module(s) globally or locally
+
+**Usage**
+
+    $ fed fed-add-modules <modules...> [-g|--global]
+        
+**Examples**
+
+    $ fed fed-add-modules fed-git --global
+    
+### fed-rm-modules
+
+Remove fed module(s) globally or locally
+
+**Usage**
+
+    $ fed fed-rm-modules <modules...> [-g|--global]
+
+**Examples**
+
+    $ fed fed-rm-modules fed-git --global
+
 ## Examples usage
 
 Create a copyright file in all of your directory
@@ -193,23 +221,24 @@ A fed module looks like this:
     /**
      * Indicates if the current module is able to treat the 
      * specified command
-     * 
+     *
+     * @param {String} command Command that fed will to execute 
      * @param {Object} dir Directory object
-     * @param {String} command Command that fed want to execute
+     *
      * @return {Boolean} True if the module can execute the command
      */
-    exports.canDo = function (dir, command) {};
+    exports.canDo = function (command, dir) {};
     
     /**
      * Returns the command to execute
      * 
      * If the return value is falsy, fed will do nothing for this command/directory
      *
+     * @param {String} command Command that fed will execute
      * @param {Object} dir Directory object
-     * @param {String} command Command that fed want to execute
      * @return {String|null} Command to execute 
      */
-    exports.getCommand = function (dir, command) {};
+    exports.getCommand = function (command, dir) {};
 
 ## fed_modules.json
 
@@ -230,6 +259,4 @@ Simply add a file name `fed_modules.json` with the following format:
 The order of the module is important, the last module have higher priority than the first.
 Local modules are higher priorities than global modules.
 
-## Installation
 
--TODO-
