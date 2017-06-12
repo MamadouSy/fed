@@ -294,12 +294,17 @@ function fed() {
     });
 }
 
-function execute(command, dirName) {
-    childProcess.execSync(command, {
-        cwd   : path.join(process.cwd(), dirName),
+function execute(command, dirName, preventBrowse) {
+    var options = {
         stdio : [0,1,2],
         env   : process.env
-    });
+    };
+    if (!preventBrowse) {
+        options.cwd = path.join(process.cwd(), dirName);
+    } else {
+        options.cwd = process.cwd();
+    }
+    childProcess.execSync(command, options);
 }
 
 /**
@@ -348,15 +353,16 @@ function executeForEach(data) {
                         if (!isWindows) {
                             cmds.push('echo ""');
                         } else {
-                            execute('echo -------------------------------------------', dir.name);
+                            console.log("");
+                            console.log("");
                         }
                     }
                     if (!isWindows) {
                          cmds.push('echo "On ' + dir.name + '..."');
                     }
                     else {
-                        execute('echo On ' + dir.name + '...', dir.name);
-                        execute('echo -------------------------------------------', dir.name);
+                        console.log('On ' + dir.name + '...');
+                        console.log('-------------------------------------------');
                     }
                 }
 
@@ -367,7 +373,7 @@ function executeForEach(data) {
                     if (!isWindows) {
                          cmds.push(cmd);
                     } else {
-                        execute(cmd, dir.name);
+                        execute(cmd, dir.name, module.preventBrowse);
                     }
                     if (!module.preventBrowse && !isWindows) {
                         cmds.push('cd -');
