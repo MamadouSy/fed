@@ -3,6 +3,8 @@
 var fs = require('fs'),
     childProcess = require('child_process'),
     path = require('path'),
+    osName = process.platform,
+    isWindows = osName === 'win32',
     dirsconf,
     map = {},
     modules = [];
@@ -292,6 +294,13 @@ function fed() {
     });
 }
 
+function execute(command, dirName) {
+    childProcess.execSync(command, {
+        cwd   : path.join(process.cwd(), dirName),
+        stdio : [0,1,2],
+        env   : process.env
+    });
+}
 
 /**
  * Execute the command data for each directories
@@ -302,7 +311,7 @@ function executeForEach(data) {
         dirs         = data.dirs,
         command      = data.command,
         directories  = [],
-        dir, cmds, cmd, child, module,
+        dir, cmds, cmd, module,
         done = {};
 
     if (!dirs || !dirs.length) {
@@ -336,18 +345,31 @@ function executeForEach(data) {
                 cmd = module.getCommand(command, dir);
                 if (!module.preventDefaultEcho) {
                     if (i) {
-                        cmds.push('echo ""');
+                        if (!isWindows) {
+                            cmds.push('echo ""');
+                        } else {
+                            execute('echo -------------------------------------------', dir.name);
+                        }
                     }
-                    cmds.push('echo "On ' + dir.name + '..."');
-                    cmds.push('echo ""');
+                    if (!isWindows) {
+                         cmds.push('echo "On ' + dir.name + '..."');
+                    }
+                    else {
+                        execute('echo On ' + dir.name + '...', dir.name);
+                        execute('echo -------------------------------------------', dir.name);
+                    }
                 }
 
                 if (cmd && typeof cmd === 'string') {
-                    if (!module.preventBrowse) {
+                    if (!module.preventBrowse && !isWindows) {
                         cmds.push('cd ' + dir.name);
                     }
-                    cmds.push(cmd);
-                    if (!module.preventBrowse) {
+                    if (!isWindows) {
+                         cmds.push(cmd);
+                    } else {
+                        execute(cmd, dir.name);
+                    }
+                    if (!module.preventBrowse && !isWindows) {
                         cmds.push('cd -');
                     }
                 }
@@ -356,10 +378,12 @@ function executeForEach(data) {
             }
         }
 
-        child = childProcess.execSync(cmds.join(';'), {
-            stdio : [0,1,2],
-            env   : process.env
-        });
+        if (!isWindows) {
+            childProcess.execSync(cmds.join(';'), {
+                stdio : [0,1,2],
+                env   : process.env
+            });
+        }
 
         if (module.stopIteration) {
             return;
