@@ -264,6 +264,7 @@ function loadModules(data, prefix) {
             moduleObject = require(modulePath);
         } catch(err) {
             moduleObject = null;
+
             console.warn("WARNING: " + err.message);
         }
 
@@ -433,11 +434,11 @@ function parseCommand() {
             dirs.push(argv[i]);
         } else {
             isCommand = true;
-            if (/\s|;/.test(argv[i])) {
-                command.push("'" + argv[i].replace(/'/gi, "\\'") + "'");
-            } else {
+            //if (/\s|;/.test(argv[i])) {
+            //    command.push("\"" + argv[i].replace(/"/gi, "\\\"") + "\"");
+            //} else {
                 command.push(argv[i]);
-            }
+            //}
         }
     }
     return {
