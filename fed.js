@@ -84,13 +84,13 @@ function registerFedModules(command) {
     this.preventDefaultEcho = true;
     this.stopIteration = true;
     const argv       = command.split(' ');
-    const isGlobal   = /\s(-g|--global)/.test(command);
-    const moduleDir  = (isGlobal) ? __dirname : appDataPath;
+    const isGlobal   = /.*\s+(-g|--global).*/.test(command);
+    const moduleDir  = (isGlobal) ? appDataPath : __dirname;
     const modulePath = path.join(moduleDir, 'fed_modules.json');
     let moduleJson;
     const registeredModules = {};
     const added = [];
-
+    
     try {
         moduleJson = fs.readFileSync(modulePath, 'utf8');
     } catch (err) {
@@ -114,7 +114,10 @@ function registerFedModules(command) {
     }
 
     if (added.length) {
-        fs.mkdirSync(moduleDir);
+        try {
+            fs.mkdirSync(moduleDir);
+        }
+        catch (ex) { /* Do nothing */}
         fs.writeFileSync(modulePath, JSON.stringify(moduleJson), 'utf8');
         console.log('Fed modules: "' + added.join(', ') + '" added.');
     } else {
@@ -134,8 +137,9 @@ function unregisterFedModules(command) {
     this.preventDefaultEcho = true;
     this.stopIteration = true;
     const argv       = command.split(' ');
-    const isGlobal   = /\s(-g|--global)/.test(command);
-    const modulePath = path.join((isGlobal) ? __dirname : appDataPath, 'fed_modules.json');
+    const isGlobal   = /.*\s+(-g|--global).*/.test(command);
+    const moduleDir  = (isGlobal) ? appDataPath : __dirname;
+    const modulePath = path.join(moduleDir, 'fed_modules.json');
     let moduleJson;
     const cleanModuleJson = [];
     const removed = [];
@@ -148,13 +152,17 @@ function unregisterFedModules(command) {
     }
     moduleJson = JSON.parse(moduleJson);
 
-    moduleJson.forEach((module) => {
+    moduleJson.forEach((mod) => {
+        let shouldBeRemove = false;
         for (let i = 1, l = argv.length; i < l; i += 1) {
-            if (module.name !== argv[i]) {
-                cleanModuleJson.push(module);
-            } else {
-                removed.push(argv[i]);
+            if (mod.name === argv[i]) {
+                shouldBeRemove = true;
             }
+        }
+        if (shouldBeRemove) {
+            removed.push(mod.name);
+        } else {
+            cleanModuleJson.push(mod);
         }
     });
 
