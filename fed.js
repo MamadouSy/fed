@@ -198,7 +198,7 @@ function addFedCommands() {
             }
 
             switch (argv[0]) {
-                case 'fed-modules':
+                case 'fed-list-modules':
                     return listModules.call(this);
                 case 'fed-add-modules' :
                     return registerFedModules.apply(this, arguments);
@@ -445,11 +445,11 @@ function parseCommand() {
             dirs.push(argv[i]);
         } else {
             isCommand = true;
-            //if (/\s|;/.test(argv[i])) {
-            //    command.push("\"" + argv[i].replace(/"/gi, "\\\"") + "\"");
-            //} else {
+            if (/\s|;/.test(argv[i])) {
+                command.push("\"" + argv[i].replace(/"/gi, "\\\"") + "\"");
+            } else {
                 command.push(argv[i]);
-            //}
+            }
         }
     }
     return {
