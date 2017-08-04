@@ -1,6 +1,6 @@
 {
   "name": "node-fed",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Execute an arbitrary shell command for each directories in the configuration file",
   "author": "Mamadou Sy",
   "keywords" : ["fed", "for each directories","directories", "shell"],

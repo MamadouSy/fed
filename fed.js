@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-var fs = require('fs'),
-    childProcess = require('child_process'),
-    path = require('path'),
-    osName = process.platform,
-    isWindows = osName === 'win32',
-    dirsconf,
-    map = {},
-    modules = [];
+const fs            = require('fs');
+const childProcess  = require('child_process');
+const path          = require('path');
+const osName        = process.platform;
+const isWindows     = osName === 'win32';
+const appDataPath   = path.join(process.env.APPDATA || 
+        (process.platform == 'darwin' ? process.env.HOME + 'Library/Preferences' : '/var/local'), 'fed');
+let dirsconf;
+const map = {};
+const modules = [];
 
 
 /**
@@ -45,7 +47,7 @@ function listModules() {
         console.log("No fed modules registered.");
         return '';
     }
-    modules.forEach(function listEachModule(module) {
+    modules.forEach((module) => {
         // Don't display internal modules
         if (module.name === '__fed-priority__' ||
             module.name === '__fed-default__') {
@@ -64,7 +66,7 @@ function listModules() {
 function listDirectories(command, dir) {
     this.preventBrowse = true;
     this.preventDefaultEcho = true;
-    var msg = dir.name;
+    let msg = dir.name;
     if (/\s(-v|--verbose)/.test(command)) {
         msg += '\n' + JSON.stringify(dir, null, 2) + '\n';
     }
@@ -81,12 +83,13 @@ function registerFedModules(command) {
     this.preventBrowse = true;
     this.preventDefaultEcho = true;
     this.stopIteration = true;
-    var argv       = command.split(' '), i, l,
-        isGlobal   = /\s(-g|--global)/.test(command),
-        modulePath = path.join((isGlobal) ? __dirname : process.cwd(), 'fed_modules.json'),
-        moduleJson,
-        registeredModules = {},
-        added = [];
+    const argv       = command.split(' ');
+    const isGlobal   = /\s(-g|--global)/.test(command);
+    const moduleDir  = (isGlobal) ? __dirname : appDataPath;
+    const modulePath = path.join(moduleDir, 'fed_modules.json');
+    let moduleJson;
+    const registeredModules = {};
+    const added = [];
 
     try {
         moduleJson = fs.readFileSync(modulePath, 'utf8');
@@ -98,7 +101,7 @@ function registerFedModules(command) {
         registeredModules[moduleJson[i].name] = true;
     }
 
-    for (i = 1, l = argv.length; i < l; i += 1) {
+    for (let i = 1, l = argv.length; i < l; i += 1) {
         if (!/^-/.test(argv[i])) { // not an option
             if (!registeredModules[argv[i]]) {
                 moduleJson.push({
@@ -111,6 +114,7 @@ function registerFedModules(command) {
     }
 
     if (added.length) {
+        fs.mkdirSync(moduleDir);
         fs.writeFileSync(modulePath, JSON.stringify(moduleJson), 'utf8');
         console.log('Fed modules: "' + added.join(', ') + '" added.');
     } else {
@@ -129,12 +133,12 @@ function unregisterFedModules(command) {
     this.preventBrowse = true;
     this.preventDefaultEcho = true;
     this.stopIteration = true;
-    var argv       = command.split(' '), i, l,
-        isGlobal   = /\s(-g|--global)/.test(command),
-        modulePath = path.join((isGlobal) ? __dirname : process.cwd(), 'fed_modules.json'),
-        moduleJson,
-        cleanModuleJson = [],
-        removed = [];
+    const argv       = command.split(' ');
+    const isGlobal   = /\s(-g|--global)/.test(command);
+    const modulePath = path.join((isGlobal) ? __dirname : appDataPath, 'fed_modules.json');
+    let moduleJson;
+    const cleanModuleJson = [];
+    const removed = [];
 
     try {
         moduleJson = fs.readFileSync(modulePath, 'utf8');
@@ -144,8 +148,8 @@ function unregisterFedModules(command) {
     }
     moduleJson = JSON.parse(moduleJson);
 
-    moduleJson.forEach(function forEachModules(module) {
-        for (i = 1, l = argv.length; i < l; i += 1) {
+    moduleJson.forEach((module) => {
+        for (let i = 1, l = argv.length; i < l; i += 1) {
             if (module.name !== argv[i]) {
                 cleanModuleJson.push(module);
             } else {
@@ -180,7 +184,7 @@ function addFedCommands() {
             return /^fed-(list|modules|add\-modules|rm\-modules)/.test(command);
         },
         getCommand : function getCommandPriority(command, dir) {
-            var argv = command.split(' ');
+            const argv = command.split(' ');
             if (command.trim() === '') {
                 return showUsage.call(this);
             }
@@ -224,13 +228,13 @@ function addDefaultCommand() {
 /*
  Entry point read the configuration file(s)
  */
-fs.readFile(path.join(__dirname, 'fed_modules.json'), 'utf8', function readGlobalModules(err, data) {
-    var cwd = process.cwd();
+fs.readFile(path.join(appDataPath, 'fed_modules.json'), 'utf8', (err, data) => {
+   const cwd = process.cwd();
    if (!err) {
        loadModules(data);
    }
-   fs.readFile(path.join(cwd , 'fed_modules.json'), 'utf8', function readLocalModules(err1, data1) {
-       var prefix = path.join(cwd, 'node_modules');
+   fs.readFile(path.join(cwd , 'fed_modules.json'), 'utf8', (err1, data1) => {
+        const prefix = path.join(cwd, 'node_modules');
         if (!err1) {
             loadModules(data1, prefix);
         }
@@ -257,14 +261,13 @@ function loadModules(data, prefix) {
     if (!data || !Array.isArray(data)) {
         return;
     }
-    data.forEach(function loadEachModule(module) {
-        var modulePath = prefix ? path.join(prefix, module.name) : module.name,
-            moduleObject;
+    data.forEach((module) => {
+        const modulePath = prefix ? path.join(prefix, module.name) : module.name;
+        let moduleObject;
         try {
             moduleObject = require(modulePath);
         } catch(err) {
             moduleObject = null;
-
             console.warn("WARNING: " + err.message);
         }
 
@@ -280,11 +283,11 @@ function loadModules(data, prefix) {
  * Main process execute the `for each directories`
  */
 function fed() {
-    fs.readFile(path.join(process.cwd(), '/fed.json'), 'utf8', function readFed(err, data) {
+    fs.readFile(path.join(process.cwd(), '/fed.json'), 'utf8', (err, data) => {
         if (err) {
-            modules = [];
+            modules.length = 0;
             addFedCommands();
-            var cmdLine = parseCommand();
+            const cmdLine = parseCommand();
             if (modules[0].canDo(cmdLine.command, cmdLine.dir)) {
                 return modules[0].getCommand(cmdLine.command, cmdLine.dir);
             }
@@ -296,9 +299,10 @@ function fed() {
 }
 
 function execute(command, dirName, preventBrowse) {
-    var options = {
+    const options = {
         stdio : [0,1,2],
-        env   : process.env
+        env   : process.env,
+        shell : true
     };
     if (!preventBrowse) {
         options.cwd = path.join(process.cwd(), dirName);
@@ -313,17 +317,15 @@ function execute(command, dirName, preventBrowse) {
  * @param {Object} data
  */
 function executeForEach(data) {
-    var i, l, j, k,
-        dirs         = data.dirs,
-        command      = data.command,
-        directories  = [],
-        dir, cmds, cmd, module,
-        done = {};
+    const dirs         = data.dirs;
+    const command      = data.command;
+    let directories    = [];
+    const done         = {};     
 
     if (!dirs || !dirs.length) {
         directories = dirsconf.dirs;
     } else {
-        for (i = 0, l = dirs.length; i < l; i += 1) {
+        for (let i = 0, l = dirs.length; i < l; i += 1) {
             if (Array.isArray(map[dirs[i]])) { // Push a group
                 directories.push.apply(directories, map[dirs[i]]);
             }  else {
@@ -332,9 +334,9 @@ function executeForEach(data) {
         }
     }
 
-    for (i = 0, l = directories.length; i < l; i += 1) {
-        cmds = [];
-        dir = directories[i];
+    for (let i = 0, l = directories.length; i < l; i += 1) {
+        let cmds = [];
+        let dir  = directories[i];
 
         // Manage already directories that has been already proceed
         if (done[dir.name]) {
@@ -342,14 +344,14 @@ function executeForEach(data) {
         }
         done[dir.name] = true;
 
-
+        let mod;
 
         // Search the modules that can execute the command
-        for (j = 0, k = modules.length; j < k; j += 1) {
-            module = modules[j];
-            if (module.canDo(command, dir)) {
-                cmd = module.getCommand(command, dir);
-                if (!module.preventDefaultEcho) {
+        for (let j = 0, k = modules.length; j < k; j += 1) {
+            mod = modules[j];
+            if (mod.canDo(command, dir)) {
+                cmd = mod.getCommand(command, dir);
+                if (!mod.preventDefaultEcho) {
                     if (i) {
                         if (!isWindows) {
                             cmds.push('echo ""');
@@ -368,15 +370,15 @@ function executeForEach(data) {
                 }
 
                 if (cmd && typeof cmd === 'string') {
-                    if (!module.preventBrowse && !isWindows) {
+                    if (!mod.preventBrowse && !isWindows) {
                         cmds.push('cd ' + dir.name);
                     }
                     if (!isWindows) {
                          cmds.push(cmd);
                     } else {
-                        execute(cmd, dir.name, module.preventBrowse);
+                        execute(cmd, dir.name, mod.preventBrowse);
                     }
-                    if (!module.preventBrowse && !isWindows) {
+                    if (!mod.preventBrowse && !isWindows) {
                         cmds.push('cd -');
                     }
                 }
@@ -388,11 +390,12 @@ function executeForEach(data) {
         if (!isWindows) {
             childProcess.execSync(cmds.join(';'), {
                 stdio : [0,1,2],
-                env   : process.env
+                env   : process.env,
+                shell : true
             });
         }
 
-        if (module.stopIteration) {
+        if (mod.stopIteration) {
             return;
         }
     }
@@ -406,10 +409,10 @@ function loadDirs(data) {
     if (!dirsconf.dirs || !Array.isArray(dirsconf.dirs)) {
         throw new Error("Require a `dirs` key as an array in the .fed file");
     }
-    dirsconf.dirs.forEach(function (dir) {
+    dirsconf.dirs.forEach((dir) => {
         map[dir.name] = dir;
         if (dir.groups) {
-            dir.groups.forEach(function (group) {
+            dir.groups.forEach((group) => {
                 if (!map[group]) {
                     map[group] = [];
                 }
@@ -424,12 +427,12 @@ function loadDirs(data) {
  * @return {Object} data Data with `dirs` and `command`
  */
 function parseCommand() {
-    var argv = process.argv,
-        dirs = [],
-        command = [], i, l,
-        isCommand = false;
+    const argv = process.argv;
+    const dirs = [];
+    const command = [];
+    let isCommand = false;
 
-    for (i = 2, l = argv.length; i < l; i += 1) {
+    for (let i = 2, l = argv.length; i < l; i += 1) {
         if (!isCommand && map[argv[i]]) {
             dirs.push(argv[i]);
         } else {
